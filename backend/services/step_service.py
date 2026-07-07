@@ -7,7 +7,6 @@ from services.model_service import ModelService
 from services.cache_service import CacheService
 from services.pack_service import PackService
 from ldraw.parser import LDrawParser
-from ldraw.dependency_resolver import DependencyResolver
 from ldraw.mpd_writer import MPDWriter
 from config import LDRAW_LIB_DIR
 
@@ -25,7 +24,6 @@ class StepService:
         self.cache_service = cache_service
         self.pack_service = pack_service
         self.parser = LDrawParser()
-        self.resolver = DependencyResolver(LDRAW_LIB_DIR)
         self.writer = MPDWriter()
 
     def ensure_steps(self, model_id: str) -> None:
@@ -50,6 +48,12 @@ class StepService:
     def steps_cache_exists(self, model_id: str) -> bool:
         """检查步骤缓存是否存在"""
         return self.cache_service.steps_cache_exists(model_id)
+
+    def source_has_steps(self, model_id: str) -> bool:
+        """检查源文件是否包含 0 STEP 标记（不生成缓存）"""
+        source_path = self.model_service.get_source_path(model_id)
+        content = source_path.read_text(encoding="utf-8")
+        return "0 STEP" in content.upper()  # LDraw 元命令不区分大小写
 
     def get_step_file(self, model_id: str, step_no: int) -> Path | None:
         """获取某一步骤的 packed MPD 文件路径"""
@@ -102,11 +106,9 @@ class StepService:
                 "newParts": list(new_parts_agg.values()),
             })
 
-            # 生成累计 packed MPD
+            # 生成累计 MPD（零件由前端 LDrawLoader 按需加载）
             acc_content = "\n".join(accumulated_lines)
-            refs = self.parser.collect_references(acc_content)
-            deps = self.resolver.resolve_all(refs)
-            packed = self.writer.write(main_content=acc_content, dependency_files=deps, config_files=config_files)
+            packed = self.writer.write(main_content=acc_content, config_files=config_files)
 
             step_path = self.cache_service.get_step_path(model_id, step_no)
             step_path.write_text(packed, encoding="utf-8")

@@ -10,6 +10,7 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { LDrawLoader } from "three/examples/jsm/loaders/LDrawLoader.js";
+import { LineMaterial } from "three/examples/jsm/lines/LineMaterial.js";
 
 export class Viewer {
   /**
@@ -40,8 +41,8 @@ export class Viewer {
   _initCamera() {
     const container = this.canvas.parentElement;
     const aspect = container.clientWidth / container.clientHeight;
-    this.camera = new THREE.PerspectiveCamera(45, aspect, 0.1, 1000);
-    this.camera.position.set(30, 20, 40);
+    this.camera = new THREE.PerspectiveCamera(45, aspect, 0.5, 5000);
+    this.camera.position.set(0, 10, 50);
     this.camera.lookAt(0, 0, 0);
   }
 
@@ -70,17 +71,18 @@ export class Viewer {
     this.controls = new OrbitControls(this.camera, this.canvas);
     this.controls.enableDamping = true;
     this.controls.dampingFactor = 0.08;
-    this.controls.minDistance = 5;
-    this.controls.maxDistance = 200;
-    this.controls.target.set(0, 10, 0);
+    this.controls.minDistance = 1;
+    this.controls.maxDistance = 2000;
+    this.controls.target.set(0, 0, 0);
     this.controls.update();
   }
 
   _initLoader() {
     this.loader = new LDrawLoader();
-    // 设置零件库路径（调试阶段直连，正式环境用 packed MPD 则不需要）
-    // packed MPD 模式：所有零件已打包进单个文件，不需要外部路径
+    // 零件库路径（前端按需从后端拉取）
     this.loader.partsLibraryPath = "/api/ldraw/";
+    // Three.js r170+ 必须设置条件线材质
+    this.loader.setConditionalLineMaterial(LineMaterial);
   }
 
   _initResize() {
@@ -155,7 +157,7 @@ export class Viewer {
     if (this.currentModel) {
       this._fitCameraToObject(this.currentModel);
     } else {
-      this.camera.position.set(30, 20, 40);
+      this.camera.position.set(0, 10, 50);
       this.controls.target.set(0, 10, 0);
       this.controls.update();
     }
@@ -194,12 +196,13 @@ export class Viewer {
     box.getSize(size);
 
     const maxDim = Math.max(size.x, size.y, size.z);
-    const distance = maxDim * 1.8;
+    const distance = maxDim * 2.0;
 
+    // 正面略微俯视：Z 轴正前方，Y 轴略高
     this.camera.position.set(
-      center.x + distance * 0.6,
-      center.y + distance * 0.5,
-      center.z + distance * 0.7
+      center.x,
+      center.y + distance * 0.3,
+      center.z + distance
     );
     this.controls.target.copy(center);
     this.controls.update();

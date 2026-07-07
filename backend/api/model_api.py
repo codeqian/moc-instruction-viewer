@@ -41,8 +41,13 @@ async def get_model_meta(model_id: str):
 
     meta = model_service.get_model_meta(model_id)
     meta["hasPackedCache"] = cache_service.packed_cache_exists(model_id)
-    meta["hasSteps"] = step_service.steps_cache_exists(model_id)
-    meta["totalSteps"] = step_service.get_total_steps(model_id)
+    meta["hasSteps"] = step_service.source_has_steps(model_id)
+    if meta["hasSteps"]:
+        # 触发步骤缓存生成（如未生成）
+        step_service.ensure_steps(model_id)
+        meta["totalSteps"] = step_service.get_total_steps(model_id)
+    else:
+        meta["totalSteps"] = 0
 
     return meta
 
