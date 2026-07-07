@@ -34,20 +34,30 @@ class PackService:
         source_path = self.model_service.get_source_path(model_id)
         source_content = source_path.read_text(encoding="utf-8")
 
-        # 解析文件块
-        mpd_blocks = self.parser.parse_mpd_blocks(source_content)
-
         # 收集所有依赖引用
         references = self.parser.collect_references(source_content)
 
         # 解析依赖文件
         dependencies = self.resolver.resolve_all(references)
 
+        # 加载颜色配置文件
+        config_files = self._load_config_files()
+
         # 写入 packed MPD
         packed_content = self.writer.write(
             main_content=source_content,
             dependency_files=dependencies,
+            config_files=config_files,
         )
 
         output_path.parent.mkdir(parents=True, exist_ok=True)
         output_path.write_text(packed_content, encoding="utf-8")
+
+    def _load_config_files(self) -> dict[str, str]:
+        """加载 LDraw 颜色配置文件"""
+        configs = {}
+        for cfg_name in ("LDConfig.ldr", "LDCfgalt.ldr"):
+            cfg_path = LDRAW_LIB_DIR / cfg_name
+            if cfg_path.exists():
+                configs[cfg_name] = cfg_path.read_text(encoding="utf-8", errors="ignore")
+        return configs

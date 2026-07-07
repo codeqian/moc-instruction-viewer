@@ -2,8 +2,10 @@
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from api.model_api import router as model_router
+from config import LDRAW_LIB_DIR
 
 app = FastAPI(
     title="MOC Instruction Viewer",
@@ -21,6 +23,10 @@ app.add_middleware(
 )
 
 app.include_router(model_router)
+
+# 挂载 LDraw 零件库目录，作为 LDrawLoader 的兜底加载路径
+if LDRAW_LIB_DIR.exists():
+    app.mount("/api/ldraw", StaticFiles(directory=str(LDRAW_LIB_DIR)), name="ldraw")
 
 
 @app.get("/api/health")

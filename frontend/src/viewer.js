@@ -79,7 +79,8 @@ export class Viewer {
   _initLoader() {
     this.loader = new LDrawLoader();
     // 设置零件库路径（调试阶段直连，正式环境用 packed MPD 则不需要）
-    this.loader.partsLibraryPath = "/ldraw/";
+    // packed MPD 模式：所有零件已打包进单个文件，不需要外部路径
+    this.loader.partsLibraryPath = "/api/ldraw/";
   }
 
   _initResize() {

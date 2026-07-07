@@ -47,6 +47,10 @@ class StepService:
             return None
         return json.loads(manifest_path.read_text(encoding="utf-8"))
 
+    def steps_cache_exists(self, model_id: str) -> bool:
+        """检查步骤缓存是否存在"""
+        return self.cache_service.steps_cache_exists(model_id)
+
     def get_step_file(self, model_id: str, step_no: int) -> Path | None:
         """获取某一步骤的 packed MPD 文件路径"""
         step_path = self.cache_service.get_step_path(model_id, step_no)
@@ -58,6 +62,9 @@ class StepService:
         """生成所有步骤的累计 packed MPD 文件"""
         source_path = self.model_service.get_source_path(model_id)
         source_content = source_path.read_text(encoding="utf-8")
+
+        # 加载颜色配置文件
+        config_files = self._load_config_files()
 
         # 按 0 STEP 切分
         step_blocks = self.parser.split_by_step(source_content)
@@ -99,7 +106,7 @@ class StepService:
             acc_content = "\n".join(accumulated_lines)
             refs = self.parser.collect_references(acc_content)
             deps = self.resolver.resolve_all(refs)
-            packed = self.writer.write(main_content=acc_content, dependency_files=deps)
+            packed = self.writer.write(main_content=acc_content, dependency_files=deps, config_files=config_files)
 
             step_path = self.cache_service.get_step_path(model_id, step_no)
             step_path.write_text(packed, encoding="utf-8")
@@ -114,3 +121,12 @@ class StepService:
         }
         manifest_path = self.cache_service.get_manifest_path(model_id)
         manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    def _load_config_files(self) -> dict[str, str]:
+        """加载 LDraw 颜色配置文件"""
+        configs = {}
+        for cfg_name in ("LDConfig.ldr", "LDCfgalt.ldr"):
+            cfg_path = LDRAW_LIB_DIR / cfg_name
+            if cfg_path.exists():
+                configs[cfg_name] = cfg_path.read_text(encoding="utf-8", errors="ignore")
+        return configs
