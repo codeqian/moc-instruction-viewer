@@ -37,3 +37,7 @@ npm run dev
 ### 访问
 
 打开浏览器访问 `http://localhost:5173/viewer/10001`
+
+## 许可证
+
+本项目采用 [PolyForm Noncommercial License 1.0.0](LICENSE) —— 允许非商业用途下的使用、修改和分发，商业使用需另行授权。
