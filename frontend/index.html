@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MOC Instruction Viewer</title>
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <div id="app">
+      <!-- 顶部工具栏 -->
+      <header id="toolbar">
+        <span id="model-name">加载中...</span>
+        <span id="step-info" class="hidden"></span>
+      </header>
+
+      <!-- 3D 渲染区 -->
+      <div id="viewer-container">
+        <canvas id="viewer-canvas"></canvas>
+        <div id="loading-overlay" class="hidden">
+          <div class="spinner"></div>
+          <p>加载模型中...</p>
+        </div>
+        <div id="error-overlay" class="hidden">
+          <p id="error-message"></p>
+        </div>
+      </div>
+
+      <!-- 底部控制栏 -->
+      <footer id="controls">
+        <button id="btn-prev" title="上一步" disabled>◀ 上一步</button>
+        <button id="btn-reset" title="重置视角">重置视角</button>
+        <button id="btn-next" title="下一步" disabled>下一步 ▶</button>
+      </footer>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
