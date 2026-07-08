@@ -139,6 +139,24 @@ moc-instruction-viewer/
     └── logs/
 ```
 
+### LDraw 零件库下载
+
+官方最新完整零件库获取地址：
+
+```
+https://library.ldraw.org/updates?latest
+```
+
+打开后下载 `complete.zip`，解压到 `data/ldraw-lib/`，目录结构为：
+
+```
+ldraw-lib/
+  LDConfig.ldr
+  parts/
+  p/
+  models/
+```
+
 ---
 
 ## 6. API 设计
