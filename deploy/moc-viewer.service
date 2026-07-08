@@ -1,0 +1,16 @@
+[Unit]
+Description=MOC Instruction Viewer Backend
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/opt/moc-viewer/backend
+Environment=DATA_DIR=/data/moc-viewer
+ExecStart=/opt/moc-viewer/backend/venv/bin/uvicorn main:app --host 127.0.0.1 --port 8000
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
