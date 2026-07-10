@@ -42,7 +42,7 @@ export class Viewer {
     const container = this.canvas.parentElement;
     const aspect = container.clientWidth / container.clientHeight;
     this.camera = new THREE.PerspectiveCamera(45, aspect, 0.5, 5000);
-    this.camera.position.set(0, 10, 50);
+    this.camera.position.set(0, 10, -50);
     this.camera.lookAt(0, 0, 0);
   }
 
@@ -157,7 +157,7 @@ export class Viewer {
     if (this.currentModel) {
       this._fitCameraToObject(this.currentModel);
     } else {
-      this.camera.position.set(0, 10, 50);
+      this.camera.position.set(0, 10, -50);
       this.controls.target.set(0, 10, 0);
       this.controls.update();
     }
@@ -198,11 +198,11 @@ export class Viewer {
     const maxDim = Math.max(size.x, size.y, size.z);
     const distance = maxDim * 2.0;
 
-    // 正面略微俯视：Z 轴正前方，Y 轴略高
+    // 正面略微俯视：Z 轴负方向（模型前方），Y 轴略高
     this.camera.position.set(
       center.x,
       center.y + distance * 0.3,
-      center.z + distance
+      center.z - distance
     );
     this.controls.target.copy(center);
     this.controls.update();
