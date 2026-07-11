@@ -1,5 +1,7 @@
 """LDraw 文件解析器 —— 解析 MPD 文件块、零件引用、步骤标记"""
 
+from __future__ import annotations
+
 import re
 from dataclasses import dataclass
 

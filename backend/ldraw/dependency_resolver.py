@@ -1,6 +1,9 @@
 """依赖解析器 —— 根据零件引用在 LDraw 零件库中查找依赖文件并递归解析"""
 
+from __future__ import annotations
+
 from pathlib import Path
+from typing import Optional
 
 from ldraw.parser import PartReference
 
@@ -51,7 +54,7 @@ class DependencyResolver:
         for sub_ref in sub_refs:
             self._resolve_recursive(sub_ref.filename, resolved, visited)
 
-    def find_ldraw_file(self, filename: str) -> Path | None:
+    def find_ldraw_file(self, filename: str) -> Optional[Path]:
         """在 LDraw 零件库中查找文件"""
         # 直接路径查找
         direct = self.lib_dir / filename

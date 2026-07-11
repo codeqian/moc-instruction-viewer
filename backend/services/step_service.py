@@ -1,7 +1,10 @@
 """分步服务 —— 解析 0 STEP、生成步骤 manifest 和分步 packed MPD"""
 
+from __future__ import annotations
+
 import json
 from pathlib import Path
+from typing import Optional
 
 from services.model_service import ModelService
 from services.cache_service import CacheService
@@ -38,7 +41,7 @@ class StepService:
             return 0
         return manifest.get("totalSteps", 0)
 
-    def get_step_manifest(self, model_id: str) -> dict | None:
+    def get_step_manifest(self, model_id: str) -> Optional[dict]:
         """获取步骤 manifest"""
         manifest_path = self.cache_service.get_manifest_path(model_id)
         if not manifest_path.exists():
@@ -55,7 +58,7 @@ class StepService:
         content = source_path.read_text(encoding="utf-8")
         return "0 STEP" in content.upper()  # LDraw 元命令不区分大小写
 
-    def get_step_file(self, model_id: str, step_no: int) -> Path | None:
+    def get_step_file(self, model_id: str, step_no: int) -> Optional[Path]:
         """获取某一步骤的 packed MPD 文件路径"""
         step_path = self.cache_service.get_step_path(model_id, step_no)
         if step_path.exists():

@@ -1,8 +1,11 @@
 """模型管理服务 —— 根据 ID 查找模型、返回元信息"""
 
+from __future__ import annotations
+
 import os
 from pathlib import Path
 from datetime import datetime
+from typing import Optional
 
 
 class ModelService:
@@ -42,7 +45,7 @@ class ModelService:
             raise FileNotFoundError(f"模型 {model_id} 不存在")
         return source_path
 
-    def _find_source_file(self, model_id: str) -> Path | None:
+    def _find_source_file(self, model_id: str) -> Optional[Path]:
         """在 source 目录中查找匹配的 .ldr 或 .mpd 文件"""
         for ext in (".ldr", ".mpd", ".LDR", ".MPD"):
             candidate = self.source_dir / f"{model_id}{ext}"

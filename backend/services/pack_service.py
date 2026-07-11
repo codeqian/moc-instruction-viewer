@@ -1,5 +1,7 @@
 """打包服务 —— 生成 MPD 文件（模型 + 颜色配置，零件由前端按需加载）"""
 
+from __future__ import annotations
+
 from pathlib import Path
 
 from services.model_service import ModelService

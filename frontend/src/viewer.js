@@ -130,6 +130,19 @@ export class Viewer {
       this.loader.load(
         url,
         (group) => {
+          // 给面片加 polygonOffset，避免条件线与面片 z-fighting 闪动
+          group.traverse((child) => {
+            if (child.isMesh && child.material) {
+              const materials = Array.isArray(child.material)
+                ? child.material
+                : [child.material];
+              materials.forEach((m) => {
+                m.polygonOffset = true;
+                m.polygonOffsetFactor = 1;
+                m.polygonOffsetUnits = 1;
+              });
+            }
+          });
           this.currentModel = group;
           this.scene.add(group);
           this._fitCameraToObject(group);

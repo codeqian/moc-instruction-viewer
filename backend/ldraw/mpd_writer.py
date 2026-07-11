@@ -5,6 +5,8 @@
 导致嵌入文件名带前导空格，缓存键与查找键不匹配，零件全部被误判为缺失。
 """
 
+from __future__ import annotations
+
 
 class MPDWriter:
     """生成 MPD 文件（模型 + 颜色配置，零件走网络按需加载）"""
