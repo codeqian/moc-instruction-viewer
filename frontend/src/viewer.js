@@ -1,11 +1,5 @@
 /**
  * 3D Viewer —— 基于 Three.js 的 LDraw 模型渲染器
- *
- * 职责：
- * - 初始化 Three.js 场景、相机、灯光
- * - 加载 packed MPD 文件并渲染
- * - 支持旋转、缩放、平移、重置视角
- * - 管理当前模型的添加 / 移除
  */
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
@@ -13,9 +7,6 @@ import { LDrawLoader } from "three/examples/jsm/loaders/LDrawLoader.js";
 import { LineMaterial } from "three/examples/jsm/lines/LineMaterial.js";
 
 export class Viewer {
-  /**
-   * @param {HTMLCanvasElement} canvas
-   */
   constructor(canvas) {
     this.canvas = canvas;
     this.currentModel = null;
@@ -30,42 +21,42 @@ export class Viewer {
     this._animate();
   }
 
-  // ---- 初始化 ----
+  // ---- 场景 ----
 
   _initScene() {
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(0x1a1a2e);
-    this.scene.fog = new THREE.Fog(0x1a1a2e, 50, 500);
   }
+
+  // ---- 相机 ----
 
   _initCamera() {
     const container = this.canvas.parentElement;
     const aspect = container.clientWidth / container.clientHeight;
     this.camera = new THREE.PerspectiveCamera(45, aspect, 0.5, 5000);
-    this.camera.position.set(0, 10, -50);
+    this.camera.position.set(0, 0, -50);
+    this.camera.up.set(0, -1, 0);
     this.camera.lookAt(0, 0, 0);
   }
 
-  _initLights() {
-    // 环境光
-    const ambient = new THREE.AmbientLight(0xffffff, 0.6);
-    this.scene.add(ambient);
+  // ---- 灯光 ----
 
-    // 主方向光
-    const key = new THREE.DirectionalLight(0xffffff, 0.8);
-    key.position.set(10, 20, 15);
+  _initLights() {
+    const hemi = new THREE.HemisphereLight(0x444444, 0xffffff, 1.2);
+    this.scene.add(hemi);
+
+    // 主光：从模型上方（世界 -Y）照射
+    const key = new THREE.DirectionalLight(0xffffff, 0.9);
+    key.position.set(30, -200, 40);
     this.scene.add(key);
 
     // 补光
-    const fill = new THREE.DirectionalLight(0xffffff, 0.3);
-    fill.position.set(-10, 5, -10);
+    const fill = new THREE.DirectionalLight(0xffffff, 0.5);
+    fill.position.set(-40, -150, -30);
     this.scene.add(fill);
-
-    // 底部补光
-    const rim = new THREE.DirectionalLight(0xffffff, 0.2);
-    rim.position.set(0, -5, 0);
-    this.scene.add(rim);
   }
+
+  // ---- 交互 ----
 
   _initControls() {
     this.controls = new OrbitControls(this.camera, this.canvas);
@@ -77,11 +68,11 @@ export class Viewer {
     this.controls.update();
   }
 
+  // ---- 模型加载器 ----
+
   _initLoader() {
     this.loader = new LDrawLoader();
-    // 零件库路径（前端按需从后端拉取）
     this.loader.partsLibraryPath = "/api/ldraw/";
-    // Three.js r170+ 必须设置条件线材质
     this.loader.setConditionalLineMaterial(LineMaterial);
   }
 
@@ -91,7 +82,6 @@ export class Viewer {
       const w = container.clientWidth;
       const h = container.clientHeight;
       if (w === 0 || h === 0) return;
-
       this.renderer.setSize(w, h, false);
       this.camera.aspect = w / h;
       this.camera.updateProjectionMatrix();
@@ -107,7 +97,6 @@ export class Viewer {
       antialias: true,
     });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    this.renderer.shadowMap.enabled = true;
 
     const render = () => {
       requestAnimationFrame(render);
@@ -119,10 +108,6 @@ export class Viewer {
 
   // ---- 公开方法 ----
 
-  /**
-   * 加载 packed MPD 模型
-   * @param {string} url - packed MPD 接口路径
-   */
   loadModel(url) {
     return new Promise((resolve, reject) => {
       this._clearModel();
@@ -130,17 +115,9 @@ export class Viewer {
       this.loader.load(
         url,
         (group) => {
-          // 给面片加 polygonOffset，避免条件线与面片 z-fighting 闪动
           group.traverse((child) => {
-            if (child.isMesh && child.material) {
-              const materials = Array.isArray(child.material)
-                ? child.material
-                : [child.material];
-              materials.forEach((m) => {
-                m.polygonOffset = true;
-                m.polygonOffsetFactor = 1;
-                m.polygonOffsetUnits = 1;
-              });
+            if (child.isLineSegments2 || child.isLineSegments) {
+              child.visible = false;
             }
           });
           this.currentModel = group;
@@ -149,7 +126,6 @@ export class Viewer {
           resolve(group);
         },
         (progress) => {
-          // 可选：进度回调
           if (progress.total > 0) {
             const pct = Math.round((progress.loaded / progress.total) * 100);
             console.debug(`加载进度: ${pct}%`);
@@ -163,15 +139,13 @@ export class Viewer {
     });
   }
 
-  /**
-   * 重置相机视角
-   */
   resetCamera() {
     if (this.currentModel) {
       this._fitCameraToObject(this.currentModel);
     } else {
-      this.camera.position.set(0, 10, -50);
-      this.controls.target.set(0, 10, 0);
+      this.camera.position.set(0, 0, -50);
+      this.camera.up.set(0, -1, 0);
+      this.controls.target.set(0, 0, 0);
       this.controls.update();
     }
   }
@@ -188,9 +162,7 @@ export class Viewer {
 
   _disposeObject(obj) {
     obj.traverse((child) => {
-      if (child.geometry) {
-        child.geometry.dispose();
-      }
+      if (child.geometry) child.geometry.dispose();
       if (child.material) {
         if (Array.isArray(child.material)) {
           child.material.forEach((m) => m.dispose());
@@ -211,13 +183,14 @@ export class Viewer {
     const maxDim = Math.max(size.x, size.y, size.z);
     const distance = maxDim * 2.0;
 
-    // 正面略微俯视：Z 轴负方向（模型前方），Y 轴略高
     this.camera.position.set(
       center.x,
-      center.y + distance * 0.3,
+      center.y,
       center.z - distance
     );
+    this.camera.up.set(0, -1, 0);
     this.controls.target.copy(center);
+    this.controls.saveState();
     this.controls.update();
   }
 }
